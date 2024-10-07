@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase'; // Firebase imports
 import { signOut, onAuthStateChanged } from 'firebase/auth'; // Firebase sign-out and auth state methods
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore'; // Firestore methods
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'; // Firestore methods
 import { updatePassword } from 'firebase/auth'; // Firebase method to update password
 import {  useNavigate } from 'react-router-dom'; // For navigation
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [userOrders, setUserOrders] = useState([]);
@@ -22,7 +21,7 @@ const Profile = () => {
       console.log(user);
       if (user) {
         setAuthenticated(true);
-        fetchUserData();
+        fetchUserData(user);
         fetchUserOrders();
       } else {
         // If no user is logged in, redirect to login page
@@ -35,17 +34,19 @@ const Profile = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  const fetchUserData = async () => {
+  const fetchUserData = async (user) => {
     if (user) {
-      const userDocRef = doc(db, 'users', user.uid); // Firestore users collection
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setName(userData.name || '');
-        setEmail(userData.email || '');
-      }
-    }
-    setLoading(false); // Stop loading after fetching user data
+       // Access user information directly from Firebase Authentication
+       setEmail(user.email || ''); // Get the user's email
+ 
+       // If additional custom data is stored in Firestore, fetch it here
+       const userDocRef = doc(db, 'users', user.uid);
+       const userDoc = await getDoc(userDocRef);
+       if (userDoc.exists()) {
+       //  const userData = userDoc.data();
+       }
+     }
+     setLoading(false); // Stop loading after fetching user data
   };
 
   const fetchUserOrders = async () => {
@@ -79,12 +80,11 @@ const Profile = () => {
 
   const handleSaveChanges = async () => {
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        name,
-        email,
-      });
+      const user = auth.currentUser;
 
+      if (!user) {
+        throw new Error('User is not authenticated');
+      }  
       if (password) {
         await updatePassword(user, password);
         alert('Password updated successfully!');
@@ -120,13 +120,7 @@ const Profile = () => {
 
           {isEditing ? (
             <div className="mb-6">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded mb-4"
-                placeholder="Update Name"
-              />
+              
               <input
                 type="email"
                 value={email}
@@ -150,9 +144,7 @@ const Profile = () => {
             </div>
           ) : (
             <>
-              <p className="mb-2">
-                <strong>Name:</strong> {name}
-              </p>
+             
               <p className="mb-4">
                 <strong>Email:</strong> {email}
               </p>
