@@ -9,6 +9,7 @@ function OrderConfirmation() {
   const location = useLocation();
   const { cart, clearCart } = location.state || {}; // Access the cart passed from the previous page
   const [orderId, setOrderId] = useState(null);
+  const [address, setAddress] = useState('');
 
   const calculateTotal = (cart) => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -25,6 +26,7 @@ function OrderConfirmation() {
           items: cart,
           totalAmount: calculateTotal(cart),
           userId: userId,
+          address: address,
           createdAt: new Date()
         };
         const docRef = await addDoc(ordersCollection, orderData);
@@ -77,11 +79,25 @@ function OrderConfirmation() {
             ))}
           </ul>
           <p className="text-xl font-bold mt-4 text-gray-900">Total: ${calculateTotal(cart).toFixed(2)}</p>
+        
+          {/* Input field for address */}
+          <div className="mt-4">
+              <label className="block text-left text-lg font-medium text-gray-700 mb-2"><span className='text-red-600'>*</span>Enter your address:</label>
+              <input 
+                type="text" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)} 
+                className="border border-gray-300 p-2 rounded w-full" 
+                placeholder="123 Main St, City, Country" 
+                required
+              />
+            </div>
         </div>
 
         <button
           className="w-full bg-green-500 text-white px-6 py-2 mt-6 rounded-lg hover:bg-teal-600 transition duration-300 ease-in-out"
           onClick={handleContinueShopping}
+          disabled={!address} // Button is disabled when address is empty
         >
           Continue Shopping
         </button>
