@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "users": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "orders": {
+      "$orderId": {
+        ".read": "auth != null && resource.data.userId == auth.uid",
+        ".write": "auth != null && request.auth.uid != null"
+      }
+    }
+  }
+}
